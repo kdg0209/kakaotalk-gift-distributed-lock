@@ -1,6 +1,7 @@
 package com.gift.kakao.domain.receivedgiftbox.api;
 
 import com.gift.kakao.domain.receivedgiftbox.application.ReceivedGiftService;
+import com.gift.kakao.domain.receivedgiftbox.application.RedissonLockFacade;
 import com.gift.kakao.domain.receivedgiftbox.dto.ReceivedGiftBoxCreateRequest;
 import com.gift.kakao.global.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
@@ -18,11 +19,12 @@ import static com.gift.kakao.global.response.ResponseStatus.CODE_201;
 @RequiredArgsConstructor
 public class ReceivedGiftBoxApi {
 
+    private final RedissonLockFacade redissonLockFacade;
     private final ReceivedGiftService receivedGiftService;
 
     @PostMapping
     public BaseResponse<Void> create(@Valid @RequestBody ReceivedGiftBoxCreateRequest request) {
-        receivedGiftService.create(request.getGiftSerialCode(), request.getMemberId());
+        redissonLockFacade.create(request.getGiftSerialCode(), request.getMemberId());
         return new BaseResponse<>(CODE_201);
     }
 }

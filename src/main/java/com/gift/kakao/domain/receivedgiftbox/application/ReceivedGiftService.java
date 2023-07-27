@@ -28,26 +28,36 @@ public class ReceivedGiftService {
     private final ReceivedGiftBoxRepository receivedGiftBoxRepository;
 
     public void create(String giftSerialCode, String memberId) {
-        RLock lock = redissonClient.getLock(GIFT_LOCK);
-        try {
-
-            if (!(lock.tryLock(WAIT_TIME, LEASE_TIME, TimeUnit.SECONDS))) {
-                log.info("lock 획득 실패");
-                throw new IllegalStateException("Lock을 획득하지 못하였습니다.");
-            }
-            log.info("lock 획득!!");
-
-            SendGiftBox sendGiftBox = sendGiftBoxDao.findByGiftSerialCode(giftSerialCode);
-            if (sendGiftBox.hasAvailableQuantity()) {
-                sendGiftBox.decreaseAvailableQuantity();
-                ReceivedGiftBox receivedGiftBox = new ReceivedGiftBox(memberId, sendGiftBox);
-                receivedGiftBoxRepository.save(receivedGiftBox);
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            lock.unlock();
-            log.info("lock 반납");
+        SendGiftBox sendGiftBox = sendGiftBoxDao.findByGiftSerialCode(giftSerialCode);
+        if (sendGiftBox.hasAvailableQuantity()) {
+            sendGiftBox.decreaseAvailableQuantity();
+            ReceivedGiftBox receivedGiftBox = new ReceivedGiftBox(memberId, sendGiftBox);
+            receivedGiftBoxRepository.save(receivedGiftBox);
         }
     }
+
+//    public void create(String giftSerialCode, String memberId) {
+//        RLock lock = redissonClient.getLock(GIFT_LOCK);
+//        try {
+//
+//            boolean hasLock = lock.tryLock(WAIT_TIME, LEASE_TIME, TimeUnit.SECONDS);
+//            if (!hasLock) {
+//                log.info("lock 획득 실패");
+//                throw new IllegalStateException("Lock을 획득하지 못하였습니다.");
+//            }
+//            log.info("lock 획득!!");
+//
+//            SendGiftBox sendGiftBox = sendGiftBoxDao.findByGiftSerialCode(giftSerialCode);
+//            if (sendGiftBox.hasAvailableQuantity()) {
+//                sendGiftBox.decreaseAvailableQuantity();
+//                ReceivedGiftBox receivedGiftBox = new ReceivedGiftBox(memberId, sendGiftBox);
+//                receivedGiftBoxRepository.save(receivedGiftBox);
+//            }
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        } finally {
+//            lock.unlock();
+//            log.info("lock 반납");
+//        }
+//    }
 }
